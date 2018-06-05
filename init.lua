@@ -30,8 +30,9 @@ local function try_staple(itemstack, placer, pointed)
 
 	-- Staple to the tree
 	local dir = vector.direction(pointed.above, pointed.under)
+	local pos = minetest.pointed_thing_to_face_pos(placer, pointed)
 	local obj = minetest.add_entity(
-		vector.add(vector.multiply(dir, 0.49), pointed.above),
+		vector.add(pos, vector.multiply(dir, -0.01)),
 		"stapled_bread:bread_slice"
 	)
 	if obj then
@@ -41,21 +42,45 @@ local function try_staple(itemstack, placer, pointed)
 			itemstack:take_item(1)
 		end
 		entity.object:set_yaw(math.atan2(-dir.x, dir.z))
+		entity.object:set_properties({
+			textures = { itemstack:get_name() }
+		})
 	end
 	return itemstack
 end
 
+local function staple_place_wrapper(itemstack, placer, pointed_thing)
+	return try_staple(itemstack, placer, pointed_thing) or itemstack
+end
+
+local extent = 0.12
+local box = {-extent, -extent, -extent, extent, extent, extent}
 minetest.register_entity("stapled_bread:bread_slice", {
 	visual = "wielditem",
-	textures = { "farming:bread" },
+	textures = { "unknown_node.png" },
 	visual_size = {x = 0.2, y = 0.2},
 	physical = false,
-	collisionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1},
-	selectionbox = {-0.1, -0.1, -0.1, 0.1, 0.1, 0.1}
+	collisionbox = box,
+	selectionbox = box
 })
 
+-- REGISTER BREAD STUFF
+
 minetest.override_item("farming:bread", {
-	on_place = function(itemstack, placer, pointed_thing)
-		return try_staple(itemstack, placer, pointed_thing) or itemstack
-	end
+	on_place = staple_place_wrapper
+})
+
+minetest.register_craftitem("stapled_bread:bread_slice", {
+	description = "Bread Slice",
+	inventory_image = "stapled_bread_slice.png",
+	on_use = minetest.item_eat(1),
+	on_place = staple_place_wrapper
+})
+
+minetest.register_craft({
+	type = "shapeless",
+	output = "stapled_bread:bread_slice 5",
+	recipe = {
+		"farming:bread"
+	}
 })
