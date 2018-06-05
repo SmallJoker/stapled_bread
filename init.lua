@@ -61,7 +61,17 @@ minetest.register_entity("stapled_bread:bread_slice", {
 	visual_size = {x = 0.2, y = 0.2},
 	physical = false,
 	collisionbox = box,
-	selectionbox = box
+	selectionbox = box,
+	get_staticdata = function(self)
+		return self.object:get_properties().textures[1]
+	end,
+	on_activate = function(self, staticdata, dtime_s)
+		if staticdata and staticdata ~= "" then
+			self.object:set_properties({
+				textures = { staticdata }
+			})
+		end
+	end
 })
 
 -- REGISTER BREAD STUFF
